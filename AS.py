@@ -11,6 +11,9 @@ from cryptography.hazmat.primitives.ciphers.aead import AESCCM
 import asyncio
 import websockets
 import threading
+import random
+import string
+import secrets
 
 seperator = b'+'
 
@@ -23,10 +26,17 @@ def key_generator(key):
     return aesccm, iv
 
 
+def get_random_string(length):
+    result_str = ''.join(secrets.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits)
+                         for i in range(length))
+    return result_str
+
+
 def add_user():
     username = input('Enter username : ')
-    key = AESCCM.generate_key(bit_length=128)
-    print('Username : ', username, '\nPassword is : ', key)
+    # key = AESCCM.generate_key(bit_length=128)
+    key = bytes(get_random_string(16), 'ascii')
+    print('Username : ', username, '\nPassword is : ', key , len(key))
     with open(f"psk_{username}.txt", 'wb') as fu:
         fu.write(key)
     # add username & password to block chain
@@ -44,9 +54,9 @@ def modify():
     except:
         print("AS Stopped....")
 
-def response(clientSocket, clientAddr):
 
-# try:
+def response(clientSocket, clientAddr):
+    # try:
     psk_AP = ''
     with open('psk_AP.txt', 'rb') as f:
         psk_AP = f.read()
@@ -112,7 +122,7 @@ def response(clientSocket, clientAddr):
             # await websocket.send(b'801' + (nonce + b'Invalid Credentials'))
     except:
         nonce = os.urandom(6)
-        clientSocket.send(b'801' + seperator + id + seperator + nonce + seperator +b'Invalid Credentials')
+        clientSocket.send(b'801' + seperator + id + seperator + nonce + seperator + b'Invalid Credentials')
         print(f"user: {id.decode()}  Authentication failed...")
     # print("Successful")
     clientSocket.close()
